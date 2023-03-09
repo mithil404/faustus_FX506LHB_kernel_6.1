@@ -547,26 +547,26 @@ static int asus_wmi_battery_remove(struct power_supply *battery)
 	return 0;
 }
 
-static struct acpi_battery_hook battery_hook = {
-	.add_battery = asus_wmi_battery_add,
-	.remove_battery = asus_wmi_battery_remove,
-	.name = "ASUS Battery Extension",
-};
+// static struct acpi_battery_hook battery_hook = {
+// 	.add_battery = asus_wmi_battery_add,
+// 	.remove_battery = asus_wmi_battery_remove,
+// 	.name = "ASUS Battery Extension",
+// };
 
-static void asus_wmi_battery_init(struct asus_wmi *asus)
-{
-	asus->battery_rsoc_available = false;
-	if (asus_wmi_dev_is_present(asus, ASUS_WMI_DEVID_RSOC)) {
-		asus->battery_rsoc_available = true;
-		battery_hook_register(&battery_hook);
-	}
-}
+// static void asus_wmi_battery_init(struct asus_wmi *asus)
+// {
+// 	asus->battery_rsoc_available = false;
+// 	if (asus_wmi_dev_is_present(asus, ASUS_WMI_DEVID_RSOC)) {
+// 		asus->battery_rsoc_available = true;
+// 		battery_hook_register(&battery_hook);
+// 	}
+// }
 
-static void asus_wmi_battery_exit(struct asus_wmi *asus)
-{
-	if (asus->battery_rsoc_available)
-		battery_hook_unregister(&battery_hook);
-}
+// static void asus_wmi_battery_exit(struct asus_wmi *asus)
+// {
+// 	if (asus->battery_rsoc_available)
+// 		battery_hook_unregister(&battery_hook);
+// }
 
 /* LEDs ***********************************************************************/
 
@@ -3106,6 +3106,7 @@ static int asus_wmi_add(struct platform_device *pdev)
 
 	/* Some Asus desktop boards export an acpi-video backlight interface,
 	   stop this from showing up */
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6,1,1)
 	chassis_type = dmi_get_system_info(DMI_CHASSIS_TYPE);
 	if (chassis_type && !strcmp(chassis_type, "3"))
 		acpi_video_set_dmi_backlight_type(acpi_backlight_vendor);
@@ -3115,7 +3116,7 @@ static int asus_wmi_add(struct platform_device *pdev)
 
 	if (asus->driver->quirks->wmi_backlight_native)
 		acpi_video_set_dmi_backlight_type(acpi_backlight_native);
-
+#endif
 	if (asus->driver->quirks->xusb2pr)
 		asus_wmi_set_xusb2pr(asus);
 
@@ -3139,9 +3140,9 @@ static int asus_wmi_add(struct platform_device *pdev)
 		goto fail_wmi_handler;
 	}
 
-	asus_wmi_battery_init(asus);
+	// asus_wmi_battery_init(asus);
 
-	asus_wmi_debugfs_init(asus);
+	// asus_wmi_debugfs_init(asus);
 
 	return 0;
 
@@ -3180,7 +3181,7 @@ static int asus_wmi_remove(struct platform_device *device)
 	asus_wmi_debugfs_exit(asus);
 	asus_wmi_sysfs_exit(asus->platform_device);
 	asus_fan_set_auto(asus);
-	asus_wmi_battery_exit(asus);
+	// asus_wmi_battery_exit(asus);
 
 	kfree(asus);
 	return 0;
@@ -3429,6 +3430,14 @@ static const struct dmi_system_id atw_dmi_list[] __initconst = {
 		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "ASUSTeK COMPUTER INC."),
 			DMI_MATCH(DMI_PRODUCT_NAME, "FX506LI"),
+		},
+	},
+	{
+		.callback = dmi_check_callback,
+		.ident = "FX506LHB.311",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "ASUSTeK COMPUTER INC."),
+			DMI_MATCH(DMI_PRODUCT_NAME, "FX506LHB.311"),
 		},
 	},
 	{}
